@@ -1,0 +1,46 @@
+name: Build and Package Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers on v1.0, v2.1.5, etc.
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to create the release and upload assets
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Get Version from Tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Publish App
+      # We publish to a local 'publish' folder
+      run: dotnet publish -c Release -r linux-x64 --self-contained false -o ./publish
+
+    - name: Create Versioned Zip
+      # This creates YAEmailValidator_v1.0.0.zip (or whatever your tag is)
+      run: |
+        cd ./publish
+        zip -r ../YAEmailValidator_${{ steps.get_version.outputs.VERSION }}.zip .
+        cd ..
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: YAEmailValidator_${{ steps.get_version.outputs.VERSION }}.zip
+        name: Release ${{ steps.get_version.outputs.VERSION }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
