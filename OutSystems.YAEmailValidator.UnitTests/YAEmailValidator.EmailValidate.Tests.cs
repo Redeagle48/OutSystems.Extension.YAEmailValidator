@@ -38,7 +38,7 @@ namespace OutSystems.YAEmailValidalitor.Tests
             Assert.That(result, Is.False, $"Expected '{email}' to be invalid.");
         }
 
-        // Tests for null or whitespace
+        // Tests for whitespace
         [TestCase("")]
         [TestCase("   ")]
         public void Validate_EmptyOrNull_ReturnsFalse(string email)
