@@ -69,7 +69,7 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        files: NetChecksumUtils_${{ steps.get_version.outputs.VERSION }}.zip
+        files: YAEmailValidator_${{ steps.get_version.outputs.VERSION }}.zip
         name: Release ${{ steps.get_version.outputs.VERSION }}
         draft: false
         prerelease: false
