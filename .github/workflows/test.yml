@@ -49,7 +49,7 @@ jobs:
       uses: codecov/codecov-action@v5
       with:
         # Codecov requires a token for private repos, 
-        # and it's highly recommended for public ones to avoid rate limits.
+        # and it's highly recommended for public ones to avoid rate limits
         token: ${{ secrets.CODECOV_TOKEN }} 
         directory: ./coverage
         fail_ci_if_error: true # Stops the build if upload fails
