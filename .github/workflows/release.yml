@@ -3,14 +3,13 @@ name: Build and Package Release
 on:
   push:
     tags:
-      - 'v*' # Triggers on v1.0, v2.1.5, etc.
+      - 'v*'
 
 jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Needed to create the release and upload assets
-
+      contents: write
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
@@ -20,16 +19,48 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
+    # 1. Restore the solution (or both projects) for the target runtime
+    - name: Restore dependencies
+      run: dotnet restore OutSystems.YAEmailValidator/OutSystems.YAEmailValidator.sln -r linux-x64
+
+    # --- THE GATEKEEPER: RUN TESTS ---
+
+    - name: Run Tests
+    # If this fails, the workflow stops here and no release is created
+      run: |
+        dotnet test OutSystems.YAEmailValidator.UnitTests/OutSystems.YAEmailValidator.UnitTests.csproj \
+        --configuration Release \
+        --no-restore \
+        --nologo \
+        --collect:"XPlat Code Coverage" \
+        --results-directory ./coverage
+
+    - name: Report Code Coverage (Optional Summary)
+      uses: irongut/CodeCoverageSummary@v1.3.0
+      with:
+        filename: coverage/**/coverage.cobertura.xml
+        badge: true
+        format: markdown
+        output: both
+
+    - name: Write Summary
+      run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
+
+    # --- PACKAGING STEPS (Only runs if tests pass) ---
     - name: Get Version from Tag
       id: get_version
       run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
     - name: Publish App
-      # We publish to a local 'publish' folder
-      run: dotnet publish OutSystems.YAEmailValidator/OutSystems.YAEmailValidator.csproj -c Release -r linux-x64 --self-contained false -o ./publish
-
+      run: |
+        dotnet publish OutSystems.YAEmailValidator/OutSystems.YAEmailValidator.csproj \
+        -c Release \
+        -r linux-x64 \
+        --self-contained false \
+        --no-restore \
+        -o ./publish
+    
     - name: Create Versioned Zip
-      # This creates YAEmailValidator_v1.0.0.zip (or whatever your tag is)
       run: |
         cd ./publish
         zip -r ../YAEmailValidator_${{ steps.get_version.outputs.VERSION }}.zip .
@@ -38,7 +69,7 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        files: YAEmailValidator_${{ steps.get_version.outputs.VERSION }}.zip
+        files: NetChecksumUtils_${{ steps.get_version.outputs.VERSION }}.zip
         name: Release ${{ steps.get_version.outputs.VERSION }}
         draft: false
         prerelease: false
