@@ -1,3 +1,3 @@
-Set-ExecutionPolicy -Scope CurrentUser Unrestricted
+Set-ExecutionPolicy -Scope Process Bypass
 dotnet publish -c Release -r linux-x64 --self-contained false
 Compress-Archive -Path .\bin\Release\net8.0\linux-x64\publish\* -DestinationPath YAEmailValidator_Asset.zip
