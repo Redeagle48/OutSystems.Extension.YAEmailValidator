@@ -7,7 +7,6 @@
 
         <IsPackable>false</IsPackable>
 
-        <LangVersion>10</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -28,5 +27,9 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
 	</ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\OutSystems.YAEmailValidator\OutSystems.YAEmailValidator.csproj" />
+    </ItemGroup>
 
 </Project>

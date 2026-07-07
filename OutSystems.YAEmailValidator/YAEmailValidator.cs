@@ -32,29 +32,19 @@ namespace OutSystems.YAEmailValidator
                 return;
             }
 
-            // If trimming is not allowed and the provided email contains leading/trailing whitespace,
-            // treat it as invalid (return false).
-            if (!allowLeadingTrailingWhitespace)
-            {
-                if (!string.Equals(emailToValidate, emailToValidate.Trim(), StringComparison.Ordinal))
-                {
-                    isValidEmail = false;
-                    return;
-                }
+            var trimmed = emailToValidate.Trim();
 
-                // No trimming allowed, validate the exact provided value.
-                isValidEmail = EmailValidator.Validate(emailToValidate,
-                    allowInternational: allowInternational,
-                    allowTopLevelDomains: allowTopLevelDomains);
+            // If trimming is not allowed and whitespace was present, reject immediately.
+            if (!allowLeadingTrailingWhitespace && !string.Equals(trimmed, emailToValidate, StringComparison.Ordinal))
+            {
+                isValidEmail = false;
                 return;
             }
 
-            // Trimming allowed: remove leading/trailing whitespace and validate the trimmed value.
-            var email = emailToValidate.Trim();
-            isValidEmail =  EmailValidator.Validate(email,
+            isValidEmail = EmailValidator.Validate(
+                allowLeadingTrailingWhitespace ? trimmed : emailToValidate,
                 allowInternational: allowInternational,
                 allowTopLevelDomains: allowTopLevelDomains);
-            return;
         }
     }
 }

@@ -3,8 +3,46 @@ using OutSystems.YAEmailValidator;
 
 namespace OutSystems.YAEmailValidator.Tests
 {
+    /// <summary>
+    /// Unit tests for <see cref="YAEmailValidator.EmailValidate"/>.
+    /// All tests exercise the wrapper (not the underlying EmailValidation library directly).
+    ///
+    /// TEST INDEX
+    /// ──────────────────────────────────────────────────────────────────
+    ///  #  Method                                                 Cases  Line
+    /// ──────────────────────────────────────────────────────────────────
+    ///  1. Validate_ValidEmails_ReturnsTrue                          8    30
+    ///  2. Validate_InvalidEmails_ReturnsFalse                      10    45
+    ///  3. Validate_EmptyOrWhitespace_ReturnsFalse                   2    62
+    ///  4. Validate_NullEmail_ThrowsArgumentNullException             1    69
+    ///  5. Validate_LeadingTrailingWhitespace_WhenNotAllowed          3    80
+    ///  6. Validate_LeadingTrailingWhitespace_WhenAllowed             3    89
+    ///  7. Validate_InternationalEmails_WhenAllowed_ReturnsTrue       2    99
+    ///  8. Validate_InternationalEmails_WhenNotAllowed_ReturnsFalse   1   108
+    ///  9. Validate_TopLevelDomain_WhenAllowed_ReturnsTrue            1   116
+    /// 10. Validate_TopLevelDomain_WhenNotAllowed_ReturnsFalse        1   123
+    /// 11. Validate_ShouldRejectDisplayNamesAndComments               2   131
+    /// 12. Validate_LocalPartBoundary                                 2   142
+    /// 13. Validate_TotalLengthBoundary                               3   157
+    /// 14. Validate_ShouldRejectInvalidDotPlacement                   3   179
+    /// ──────────────────────────────────────────────────────────────────
+    ///                                                     Total:   39
+    ///
+    /// COVERAGE BY FEATURE
+    /// ──────────────────────────────────────────────────────────────────
+    ///  Feature / Flag                       Tests
+    /// ──────────────────────────────────────────────────────────────────
+    ///  Basic valid/invalid emails            #1, #2
+    ///  Empty/whitespace/null input           #3, #4
+    ///  allowLeadingTrailingWhitespace flag   #5, #6
+    ///  allowInternational flag (RFC 6531)    #7, #8
+    ///  allowTopLevelDomains flag             #9, #10
+    ///  RFC 5321 compliance                   #11 (display names), #12 (local part 64-char),
+    ///                                        #13 (total 254-char), #14 (dot placement)
+    /// ──────────────────────────────────────────────────────────────────
+    /// </summary>
     [TestFixture]
-    public class EmailValidatorTests
+    public class YAEmailValidatorTests
     {
         // Invokes the extension wrapper under test and returns the out result.
         private static bool Validate(
@@ -37,7 +75,8 @@ namespace OutSystems.YAEmailValidator.Tests
             Assert.That(Validate(email), Is.True, $"Expected '{email}' to be valid.");
         }
 
-        // Tests for invalid email addresses
+        // --- Invalid emails ---
+
         [TestCase("plainaddress")]               // No @ or domain
         [TestCase("#@%^%#$@#$@#.com")]           // Garbage characters
         [TestCase("@domain.com")]                // Missing username
@@ -136,7 +175,6 @@ namespace OutSystems.YAEmailValidator.Tests
 
             // 254 - 1 (@) - 195 (domain) = 58
             string local = new string('a', 58);
-
             string valid254 = $"{local}@{domain}";
 
             using (Assert.EnterMultipleScope())
