@@ -51,13 +51,5 @@ publish/
 *.dev.local
 appsettings.Development.json
 
-# Test Results & Coverage
-TestResults/
-*.sequenced
-*.coverage
-*.opencoverxml
-
-## =========================================================================
-## Claude Code
-## =========================================================================
+## Claude
 .claude/
