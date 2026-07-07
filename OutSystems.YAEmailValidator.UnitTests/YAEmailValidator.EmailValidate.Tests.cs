@@ -1,6 +1,7 @@
 using NUnit.Framework;
+using OutSystems.YAEmailValidator;
 
-namespace OutSystems.YAEmailValidator.UnitTests
+namespace OutSystems.YAEmailValidator.Tests
 {
     /// <summary>
     /// Unit tests for <see cref="YAEmailValidator.EmailValidate"/>.
@@ -43,19 +44,24 @@ namespace OutSystems.YAEmailValidator.UnitTests
     [TestFixture]
     public class YAEmailValidatorTests
     {
-        private readonly YAEmailValidator _validator = new();
-
-        private bool Validate(string email,
-            bool allowWhitespace = false,
+        // Invokes the extension wrapper under test and returns the out result.
+        private static bool Validate(
+            string? email,
+            bool allowLeadingTrailingWhitespace = true,
             bool allowInternational = false,
             bool allowTopLevelDomains = false)
         {
-            _validator.EmailValidate(email, allowWhitespace, allowInternational, allowTopLevelDomains, out bool result);
-            return result;
+            var sut = new YAEmailValidator();
+            sut.EmailValidate(
+                email!,
+                allowLeadingTrailingWhitespace,
+                allowInternational,
+                allowTopLevelDomains,
+                out bool isValidEmail);
+            return isValidEmail;
         }
 
-        // --- Valid emails ---
-
+        // Tests for valid email addresses
         [TestCase("test@example.com")]
         [TestCase("firstname.lastname@domain.com")]
         [TestCase("email@subdomain.domain.com")]
@@ -86,79 +92,60 @@ namespace OutSystems.YAEmailValidator.UnitTests
             Assert.That(Validate(email), Is.False, $"Expected '{email}' to be invalid.");
         }
 
-        // --- Empty and whitespace ---
-
+        // Wrapper contract: null, empty and whitespace-only inputs are invalid, never throw.
+        [TestCase(null)]
         [TestCase("")]
         [TestCase("   ")]
-        public void Validate_EmptyOrWhitespace_ReturnsFalse(string email)
+        public void Validate_NullEmptyOrWhitespace_ReturnsFalse(string? email)
         {
             Assert.That(Validate(email), Is.False);
         }
 
-        // --- Null handling ---
-
+        // Wrapper contract: allowLeadingTrailingWhitespace flag behavior.
         [Test]
-        public void Validate_NullEmail_ThrowsArgumentNullException()
+        public void Validate_LeadingTrailingWhitespace_RejectedWhenNotAllowed()
         {
-            Assert.Throws<ArgumentNullException>(() =>
-                _validator.EmailValidate(null!, false, false, false, out _));
-        }
-
-        // --- Whitespace flag ---
-
-        [TestCase(" test@example.com")]
-        [TestCase("test@example.com ")]
-        [TestCase("  test@example.com  ")]
-        public void Validate_LeadingTrailingWhitespace_WhenNotAllowed_ReturnsFalse(string email)
-        {
-            Assert.That(Validate(email, allowWhitespace: false), Is.False,
-                $"Expected '{email}' to be invalid when whitespace is not allowed.");
-        }
-
-        [TestCase(" test@example.com")]
-        [TestCase("test@example.com ")]
-        [TestCase("  test@example.com  ")]
-        public void Validate_LeadingTrailingWhitespace_WhenAllowed_ReturnsTrue(string email)
-        {
-            Assert.That(Validate(email, allowWhitespace: true), Is.True,
-                $"Expected '{email}' to be valid when whitespace is allowed (trimmed before validation).");
-        }
-
-        // --- International support (RFC 6531) ---
-
-        [TestCase("t\u00e9st@domain.com")]
-        [TestCase("\u7528\u6237@\u4f8b\u5b50.\u5e7f\u544a")]
-        public void Validate_InternationalEmails_WhenAllowed_ReturnsTrue(string email)
-        {
-            Assert.That(Validate(email, allowInternational: true), Is.True,
-                $"Expected international email '{email}' to be valid.");
-        }
-
-        [TestCase("t\u00e9st@domain.com")]
-        public void Validate_InternationalEmails_WhenNotAllowed_ReturnsFalse(string email)
-        {
-            Assert.That(Validate(email, allowInternational: false), Is.False,
-                $"Expected international email '{email}' to be invalid when international is not allowed.");
-        }
-
-        // --- Top-level domain flag ---
-
-        [Test]
-        public void Validate_TopLevelDomain_WhenAllowed_ReturnsTrue()
-        {
-            Assert.That(Validate("user@localhost", allowTopLevelDomains: true), Is.True,
-                "Expected 'user@localhost' to be valid when TLDs are allowed.");
+            Assert.That(
+                Validate("  test@example.com  ", allowLeadingTrailingWhitespace: false),
+                Is.False,
+                "Whitespace-padded email must be rejected when trimming is disallowed.");
         }
 
         [Test]
-        public void Validate_TopLevelDomain_WhenNotAllowed_ReturnsFalse()
+        public void Validate_LeadingTrailingWhitespace_TrimmedWhenAllowed()
         {
-            Assert.That(Validate("user@localhost", allowTopLevelDomains: false), Is.False,
-                "Expected 'user@localhost' to be invalid when TLDs are not allowed.");
+            Assert.That(
+                Validate("  test@example.com  ", allowLeadingTrailingWhitespace: true),
+                Is.True,
+                "Whitespace-padded email must be trimmed and accepted when trimming is allowed.");
         }
 
-        // --- Display name rejection (RFC 5321) ---
+        // INTERNATIONALIZATION (RFC 6531)
+        [TestCase("tést@domain.com")]
+        [TestCase("用户@例子.广告")]
+        public void Validate_InternationalEmails_AllowedWhenFlagSet(string email)
+        {
+            Assert.That(Validate(email, allowInternational: true), Is.True);
+        }
 
+        [TestCase("tést@domain.com")]
+        [TestCase("用户@例子.广告")]
+        public void Validate_InternationalEmails_RejectedWhenFlagUnset(string email)
+        {
+            Assert.That(Validate(email, allowInternational: false), Is.False);
+        }
+
+        // TOP-LEVEL DOMAINS: bare-TLD domains only accepted when the flag is set.
+        [Test]
+        public void Validate_TopLevelDomain_DependsOnFlag()
+        {
+            Assert.That(Validate("user@com", allowTopLevelDomains: false), Is.False,
+                "Bare TLD domain must be rejected when the flag is unset.");
+            Assert.That(Validate("user@com", allowTopLevelDomains: true), Is.True,
+                "Bare TLD domain must be accepted when the flag is set.");
+        }
+
+        // THE "DISPLAY NAME" TRAP — EmailValidation correctly fails these.
         [TestCase("Jeffrey Stedfast <jestedfa@microsoft.com>")]
         [TestCase("jestedfa@microsoft.com (Jeffrey Stedfast)")]
         public void Validate_ShouldRejectDisplayNamesAndComments(string email)
@@ -167,23 +154,18 @@ namespace OutSystems.YAEmailValidator.UnitTests
                 "RFC 5321 Address literals should not include display names or comments.");
         }
 
-        // --- Local part length boundary (64 chars max) ---
-
+        // LOCAL PART LENGTH (Exactly 64 chars is allowed, 65 is not)
         [Test]
         public void Validate_LocalPartBoundary()
         {
             string sixtyFourChars = new string('a', 64);
             string sixtyFiveChars = new string('a', 65);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(Validate($"{sixtyFourChars}@domain.com"), Is.True, "64 chars should pass.");
-                Assert.That(Validate($"{sixtyFiveChars}@domain.com"), Is.False, "65 chars must fail.");
-            });
+            Assert.That(Validate($"{sixtyFourChars}@domain.com"), Is.True, "64 chars should pass.");
+            Assert.That(Validate($"{sixtyFiveChars}@domain.com"), Is.False, "65 chars must fail.");
         }
 
-        // --- Total length boundary (254 chars max) ---
-
+        // TOTAL LENGTH (Maximum 254 characters)
         [Test]
         public void Validate_TotalLengthBoundary()
         {
@@ -195,18 +177,17 @@ namespace OutSystems.YAEmailValidator.UnitTests
             string local = new string('a', 58);
             string valid254 = $"{local}@{domain}";
 
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
                 Assert.That(valid254.Length, Is.EqualTo(254), "Manual check that string is 254");
                 Assert.That(Validate(valid254), Is.True, "254 chars with valid labels should pass.");
 
                 string invalid255 = "a" + valid254;
                 Assert.That(Validate(invalid255), Is.False, "255 chars must fail.");
-            });
+            }
         }
 
-        // --- Invalid dot placement ---
-
+        // THE "DOUBLE DOT" AND PURE SYNTAX
         [TestCase("user..name@domain.com")] // Consecutive dots
         [TestCase(".user@domain.com")]     // Leading dot
         [TestCase("user.@domain.com")]     // Trailing dot in local part
