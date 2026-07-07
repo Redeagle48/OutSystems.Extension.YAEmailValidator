@@ -9,36 +9,34 @@ namespace OutSystems.YAEmailValidator.Tests
     ///
     /// TEST INDEX
     /// ──────────────────────────────────────────────────────────────────
-    ///  #  Method                                                 Cases  Line
+    ///  #  Method                                                    Cases
     /// ──────────────────────────────────────────────────────────────────
-    ///  1. Validate_ValidEmails_ReturnsTrue                          8    30
-    ///  2. Validate_InvalidEmails_ReturnsFalse                      10    45
-    ///  3. Validate_EmptyOrWhitespace_ReturnsFalse                   2    62
-    ///  4. Validate_NullEmail_ThrowsArgumentNullException             1    69
-    ///  5. Validate_LeadingTrailingWhitespace_WhenNotAllowed          3    80
-    ///  6. Validate_LeadingTrailingWhitespace_WhenAllowed             3    89
-    ///  7. Validate_InternationalEmails_WhenAllowed_ReturnsTrue       2    99
-    ///  8. Validate_InternationalEmails_WhenNotAllowed_ReturnsFalse   1   108
-    ///  9. Validate_TopLevelDomain_WhenAllowed_ReturnsTrue            1   116
-    /// 10. Validate_TopLevelDomain_WhenNotAllowed_ReturnsFalse        1   123
-    /// 11. Validate_ShouldRejectDisplayNamesAndComments               2   131
-    /// 12. Validate_LocalPartBoundary                                 2   142
-    /// 13. Validate_TotalLengthBoundary                               3   157
-    /// 14. Validate_ShouldRejectInvalidDotPlacement                   3   179
+    ///  1. Validate_ValidEmails_ReturnsTrue                             8
+    ///  2. Validate_InvalidEmails_ReturnsFalse                         10
+    ///  3. Validate_NullEmptyOrWhitespace_ReturnsFalse                  3
+    ///  4. Validate_LeadingTrailingWhitespace_RejectedWhenNotAllowed    1
+    ///  5. Validate_LeadingTrailingWhitespace_TrimmedWhenAllowed        1
+    ///  6. Validate_InternationalEmails_AllowedWhenFlagSet              2
+    ///  7. Validate_InternationalEmails_RejectedWhenFlagUnset           2
+    ///  8. Validate_TopLevelDomain_DependsOnFlag                        1
+    ///  9. Validate_ShouldRejectDisplayNamesAndComments                 2
+    /// 10. Validate_LocalPartBoundary                                   1
+    /// 11. Validate_TotalLengthBoundary                                 1
+    /// 12. Validate_ShouldRejectInvalidDotPlacement                     3
     /// ──────────────────────────────────────────────────────────────────
-    ///                                                     Total:   39
+    ///                                                        Total:   35
     ///
     /// COVERAGE BY FEATURE
     /// ──────────────────────────────────────────────────────────────────
     ///  Feature / Flag                       Tests
     /// ──────────────────────────────────────────────────────────────────
     ///  Basic valid/invalid emails            #1, #2
-    ///  Empty/whitespace/null input           #3, #4
-    ///  allowLeadingTrailingWhitespace flag   #5, #6
-    ///  allowInternational flag (RFC 6531)    #7, #8
-    ///  allowTopLevelDomains flag             #9, #10
-    ///  RFC 5321 compliance                   #11 (display names), #12 (local part 64-char),
-    ///                                        #13 (total 254-char), #14 (dot placement)
+    ///  Null/empty/whitespace input           #3
+    ///  allowLeadingTrailingWhitespace flag   #4, #5
+    ///  allowInternational flag (RFC 6531)    #6, #7
+    ///  allowTopLevelDomains flag             #8
+    ///  RFC 5321 compliance                   #9 (display names), #10 (local part 64-char),
+    ///                                        #11 (total 254-char), #12 (dot placement)
     /// ──────────────────────────────────────────────────────────────────
     /// </summary>
     [TestFixture]
