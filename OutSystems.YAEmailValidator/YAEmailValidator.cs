@@ -12,13 +12,13 @@ namespace OutSystems.YAEmailValidator
         /// Validates the specified email address with optional flags for trimming and international/TLD support.
         /// </summary>
         /// <param name="emailToValidate">The email to validate.</param>
-        /// <param name="allowLeadingTrailingWhitespace_optional">
+        /// <param name="allowLeadingTrailingWhitespace">
         /// When true, leading/trailing whitespace will be ignored (the email is trimmed before validation).
         /// When false, the method returns false if the provided email contains any leading or trailing whitespace.
         /// </param>
-        /// <param name="allowInternational_optional">If true, non-ASCII international addresses are allowed.</param>
-        /// <param name="allowTopLevelDomains_optional">If true, top-level domains are allowed (prevents local-only addresses like "user@localhost").</param>
-        /// <returns>True when the email is valid; otherwise false.</returns>
+        /// <param name="allowInternational">If true, non-ASCII international addresses are allowed.</param>
+        /// <param name="allowTopLevelDomains">When true, addresses whose domain is a bare top-level domain (e.g. "user@com" or "user@localhost") are accepted.</param>
+        /// <param name="isValidEmail">Set to true when the email is valid according to RFC 5321; otherwise false.</param>
         public void EmailValidate(
             string emailToValidate,
             bool allowLeadingTrailingWhitespace,
@@ -26,7 +26,11 @@ namespace OutSystems.YAEmailValidator
             bool allowTopLevelDomains,
             out bool isValidEmail)
         {
-            if (emailToValidate is null) throw new ArgumentNullException(nameof(emailToValidate));
+            if (string.IsNullOrEmpty(emailToValidate))
+            {
+                isValidEmail = false;
+                return;
+            }
 
             // If trimming is not allowed and the provided email contains leading/trailing whitespace,
             // treat it as invalid (return false).
