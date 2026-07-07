@@ -17,8 +17,8 @@ namespace OutSystems.YAEmailValidator
         /// When false, the method returns false if the provided email contains any leading or trailing whitespace.
         /// </param>
         /// <param name="allowInternational">If true, non-ASCII international addresses are allowed.</param>
-        /// <param name="allowTopLevelDomains">If true, top-level domains are allowed (prevents local-only addresses like "user@localhost").</param>
-        /// <param name="isValidEmail">True when the email is valid according to RFC 5321; otherwise false.</param>
+        /// <param name="allowTopLevelDomains">When true, addresses whose domain is a bare top-level domain (e.g. "user@com" or "user@localhost") are accepted.</param>
+        /// <param name="isValidEmail">Set to true when the email is valid according to RFC 5321; otherwise false.</param>
         public void EmailValidate(
             string emailToValidate,
             bool allowLeadingTrailingWhitespace,
@@ -26,7 +26,11 @@ namespace OutSystems.YAEmailValidator
             bool allowTopLevelDomains,
             out bool isValidEmail)
         {
-            if (emailToValidate is null) throw new ArgumentNullException(nameof(emailToValidate));
+            if (string.IsNullOrEmpty(emailToValidate))
+            {
+                isValidEmail = false;
+                return;
+            }
 
             var trimmed = emailToValidate.Trim();
 

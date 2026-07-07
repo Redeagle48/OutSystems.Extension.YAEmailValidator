@@ -10,20 +10,19 @@ namespace OutSystems.YAEmailValidator.UnitTests
     /// ──────────────────────────────────────────────────────────────────
     ///  #  Method                                                 Cases  Line
     /// ──────────────────────────────────────────────────────────────────
-    ///  1. Validate_ValidEmails_ReturnsTrue                          8    30
-    ///  2. Validate_InvalidEmails_ReturnsFalse                      10    45
-    ///  3. Validate_EmptyOrWhitespace_ReturnsFalse                   2    62
-    ///  4. Validate_NullEmail_ThrowsArgumentNullException             1    69
-    ///  5. Validate_LeadingTrailingWhitespace_WhenNotAllowed          3    80
-    ///  6. Validate_LeadingTrailingWhitespace_WhenAllowed             3    89
-    ///  7. Validate_InternationalEmails_WhenAllowed_ReturnsTrue       2    99
-    ///  8. Validate_InternationalEmails_WhenNotAllowed_ReturnsFalse   1   108
-    ///  9. Validate_TopLevelDomain_WhenAllowed_ReturnsTrue            1   116
-    /// 10. Validate_TopLevelDomain_WhenNotAllowed_ReturnsFalse        1   123
-    /// 11. Validate_ShouldRejectDisplayNamesAndComments               2   131
-    /// 12. Validate_LocalPartBoundary                                 2   142
-    /// 13. Validate_TotalLengthBoundary                               3   157
-    /// 14. Validate_ShouldRejectInvalidDotPlacement                   3   179
+    ///  1. Validate_ValidEmails_ReturnsTrue                          8    52
+    ///  2. Validate_InvalidEmails_ReturnsFalse                      10    67
+    ///  3. Validate_NullEmptyOrWhitespace_ReturnsFalse               3    84
+    ///  4. Validate_LeadingTrailingWhitespace_WhenNotAllowed         3    94
+    ///  5. Validate_LeadingTrailingWhitespace_WhenAllowed            3   104
+    ///  6. Validate_InternationalEmails_WhenAllowed_ReturnsTrue      2   114
+    ///  7. Validate_InternationalEmails_WhenNotAllowed_ReturnsFalse  1   123
+    ///  8. Validate_TopLevelDomain_WhenAllowed_ReturnsTrue           1   131
+    ///  9. Validate_TopLevelDomain_WhenNotAllowed_ReturnsFalse       1   138
+    /// 10. Validate_ShouldRejectDisplayNamesAndComments              2   147
+    /// 11. Validate_LocalPartBoundary                                1   157
+    /// 12. Validate_TotalLengthBoundary                              1   171
+    /// 13. Validate_ShouldRejectInvalidDotPlacement                  3   192
     /// ──────────────────────────────────────────────────────────────────
     ///                                                     Total:   39
     ///
@@ -32,12 +31,12 @@ namespace OutSystems.YAEmailValidator.UnitTests
     ///  Feature / Flag                       Tests
     /// ──────────────────────────────────────────────────────────────────
     ///  Basic valid/invalid emails            #1, #2
-    ///  Empty/whitespace/null input           #3, #4
-    ///  allowLeadingTrailingWhitespace flag   #5, #6
-    ///  allowInternational flag (RFC 6531)    #7, #8
-    ///  allowTopLevelDomains flag             #9, #10
-    ///  RFC 5321 compliance                   #11 (display names), #12 (local part 64-char),
-    ///                                        #13 (total 254-char), #14 (dot placement)
+    ///  Null/empty/whitespace input           #3
+    ///  allowLeadingTrailingWhitespace flag   #4, #5
+    ///  allowInternational flag (RFC 6531)    #6, #7
+    ///  allowTopLevelDomains flag             #8, #9
+    ///  RFC 5321 compliance                   #10 (display names), #11 (local part 64-char),
+    ///                                        #12 (total 254-char), #13 (dot placement)
     /// ──────────────────────────────────────────────────────────────────
     /// </summary>
     [TestFixture]
@@ -45,12 +44,12 @@ namespace OutSystems.YAEmailValidator.UnitTests
     {
         private readonly YAEmailValidator _validator = new();
 
-        private bool Validate(string email,
+        private bool Validate(string? email,
             bool allowWhitespace = false,
             bool allowInternational = false,
             bool allowTopLevelDomains = false)
         {
-            _validator.EmailValidate(email, allowWhitespace, allowInternational, allowTopLevelDomains, out bool result);
+            _validator.EmailValidate(email!, allowWhitespace, allowInternational, allowTopLevelDomains, out bool result);
             return result;
         }
 
@@ -86,22 +85,14 @@ namespace OutSystems.YAEmailValidator.UnitTests
             Assert.That(Validate(email), Is.False, $"Expected '{email}' to be invalid.");
         }
 
-        // --- Empty and whitespace ---
+        // --- Null, empty and whitespace: invalid, never throws ---
 
+        [TestCase(null)]
         [TestCase("")]
         [TestCase("   ")]
-        public void Validate_EmptyOrWhitespace_ReturnsFalse(string email)
+        public void Validate_NullEmptyOrWhitespace_ReturnsFalse(string? email)
         {
             Assert.That(Validate(email), Is.False);
-        }
-
-        // --- Null handling ---
-
-        [Test]
-        public void Validate_NullEmail_ThrowsArgumentNullException()
-        {
-            Assert.Throws<ArgumentNullException>(() =>
-                _validator.EmailValidate(null!, false, false, false, out _));
         }
 
         // --- Whitespace flag ---
@@ -126,15 +117,15 @@ namespace OutSystems.YAEmailValidator.UnitTests
 
         // --- International support (RFC 6531) ---
 
-        [TestCase("t\u00e9st@domain.com")]
-        [TestCase("\u7528\u6237@\u4f8b\u5b50.\u5e7f\u544a")]
+        [TestCase("tést@domain.com")]
+        [TestCase("用户@例子.广告")]
         public void Validate_InternationalEmails_WhenAllowed_ReturnsTrue(string email)
         {
             Assert.That(Validate(email, allowInternational: true), Is.True,
                 $"Expected international email '{email}' to be valid.");
         }
 
-        [TestCase("t\u00e9st@domain.com")]
+        [TestCase("tést@domain.com")]
         public void Validate_InternationalEmails_WhenNotAllowed_ReturnsFalse(string email)
         {
             Assert.That(Validate(email, allowInternational: false), Is.False,
@@ -175,11 +166,11 @@ namespace OutSystems.YAEmailValidator.UnitTests
             string sixtyFourChars = new string('a', 64);
             string sixtyFiveChars = new string('a', 65);
 
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
                 Assert.That(Validate($"{sixtyFourChars}@domain.com"), Is.True, "64 chars should pass.");
                 Assert.That(Validate($"{sixtyFiveChars}@domain.com"), Is.False, "65 chars must fail.");
-            });
+            }
         }
 
         // --- Total length boundary (254 chars max) ---
@@ -195,14 +186,14 @@ namespace OutSystems.YAEmailValidator.UnitTests
             string local = new string('a', 58);
             string valid254 = $"{local}@{domain}";
 
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
                 Assert.That(valid254.Length, Is.EqualTo(254), "Manual check that string is 254");
                 Assert.That(Validate(valid254), Is.True, "254 chars with valid labels should pass.");
 
                 string invalid255 = "a" + valid254;
                 Assert.That(Validate(invalid255), Is.False, "255 chars must fail.");
-            });
+            }
         }
 
         // --- Invalid dot placement ---

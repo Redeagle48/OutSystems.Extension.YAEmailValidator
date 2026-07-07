@@ -20,8 +20,8 @@ namespace OutSystems.YAEmailValidator
         /// When false, the method returns false if the provided email contains any leading or trailing whitespace.
         /// </param>
         /// <param name="allowInternational">If true, non-ASCII international addresses are allowed.</param>
-        /// <param name="allowTopLevelDomains">If true, top-level domains are allowed (prevents local-only addresses like "user@localhost").</param>
-        /// <param name="isValidEmail">True when the email is valid according to RFC 5321; otherwise false.</param>
+        /// <param name="allowTopLevelDomains">When true, addresses whose domain is a bare top-level domain (e.g. "user@com" or "user@localhost") are accepted.</param>
+        /// <param name="isValidEmail">Set to true when the email is valid according to RFC 5321; otherwise false.</param>
         [OSAction(
             Description = "Validates the specified email address (using the RFC 5321) with optional flags for trimming and international/TLD support.",
             IconResourceName = "OutSystems.YAEmailValidator.resources.YAEmailValidator_icon.png"
@@ -33,7 +33,7 @@ namespace OutSystems.YAEmailValidator
             bool allowLeadingTrailingWhitespace,
             [OSParameterAttribute(Description = "If true, non-ASCII international addresses are allowed.")]
             bool allowInternational,
-            [OSParameterAttribute(Description = "If true, top-level domains are allowed (prevents local-only addresses like 'user@localhost').")]
+            [OSParameterAttribute(Description = "When true, addresses whose domain is a bare top-level domain (e.g. 'user@com' or 'user@localhost') are accepted.")]
             bool allowTopLevelDomains,
             [OSParameterAttribute(Description = "True, if email is valid according to RFC 5321. Otherwise, false.")]
             out bool isValidEmail
